@@ -1,4 +1,4 @@
-use anyhow::{anyhow as ah, Result};
+use anyhow::{anyhow as ah, Chain, Result};
 
 mod challenge;
 
@@ -10,6 +10,9 @@ fn main() -> Result<()> {
 
     challenge::run(&args).map_err(|e| {
         log::error!("{}", e);
+        e.chain()
+            .skip(1)
+            .for_each(|cause| log::error!("because: {}", cause));
         ah!("unrecoverable failure")
     })
 }

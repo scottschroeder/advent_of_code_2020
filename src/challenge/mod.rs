@@ -2,6 +2,7 @@ use anyhow::{anyhow as ah, Context, Result};
 use std::{fs, io::Read, path};
 
 mod day1;
+mod day2;
 
 fn f<T: std::fmt::Display>(t: Result<T>) -> Result<()> {
     t.map(|t| {
@@ -17,6 +18,8 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     match (day, part) {
         (1, 1) => f(day1::part1(&input)),
         (1, 2) => f(day1::part2(&input)),
+        (2, 1) => f(day2::part1(&input)),
+        (2, 2) => f(day2::part2(&input)),
         (d, p) => Err(ah!("unimplemented challenge day {} part {}", d, p)),
     }
 }
