@@ -1,4 +1,4 @@
-use anyhow::{anyhow as ah, Chain, Result};
+use anyhow::{anyhow as ah, Result};
 
 mod challenge;
 
