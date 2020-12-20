@@ -10,7 +10,18 @@ pub fn part1(input: &str) -> Result<impl fmt::Display> {
     Ok(trees_hit(&trees, Point::new(0, 0), Point::new(3, 1)))
 }
 pub fn part2(input: &str) -> Result<impl fmt::Display> {
-    Ok("")
+    let trees = parse(input)?;
+    let slopes = &[
+        Point::new(1, 1),
+        Point::new(3, 1),
+        Point::new(5, 1),
+        Point::new(7, 1),
+        Point::new(1, 2),
+    ];
+    Ok(slopes
+        .iter()
+        .map(|s| trees_hit(&trees, Point::new(0, 0), *s))
+        .fold(1, |acc, i| acc * i))
 }
 
 struct Trees {
@@ -44,10 +55,14 @@ mod tests {
     }
     #[test]
     fn verify_p2() {
-        assert_eq!(format!("{}", part2(INPUT).unwrap()), "")
+        assert_eq!(format!("{}", part2(INPUT).unwrap()), "9709761600")
     }
     #[test]
     fn day1_ex() {
         assert_eq!(format!("{}", part1(EX).unwrap()), "7")
+    }
+    #[test]
+    fn day2_ex() {
+        assert_eq!(format!("{}", part2(EX).unwrap()), "336")
     }
 }
