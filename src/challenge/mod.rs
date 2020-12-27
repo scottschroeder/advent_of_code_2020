@@ -9,6 +9,7 @@ mod day5;
 mod day6;
 mod day7;
 mod day8;
+mod day9;
 
 fn f<T: std::fmt::Display>(t: Result<T>) -> Result<()> {
     t.map(|t| {
@@ -38,6 +39,8 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         (7, 2) => f(day7::part2(&input)),
         (8, 1) => f(day8::part1(&input)),
         (8, 2) => f(day8::part2(&input)),
+        (9, 1) => f(day9::part1(&input)),
+        (9, 2) => f(day9::part2(&input)),
         (d, p) => Err(ah!("unimplemented challenge day {} part {}", d, p)),
     }
 }
