@@ -1,6 +1,7 @@
 use anyhow::{anyhow as ah, Result};
 
 mod challenge;
+mod gameconsole;
 
 fn main() -> Result<()> {
     color_backtrace::install();
