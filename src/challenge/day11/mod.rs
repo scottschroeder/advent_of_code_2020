@@ -20,7 +20,9 @@ pub fn part2(input: &str) -> Result<impl fmt::Display> {
 }
 
 struct Board {
-    inner: FixedGrid<Tile>,
+    a: FixedGrid<Tile>,
+    b: FixedGrid<Tile>,
+    swp: bool,
 }
 
 fn check_immediate_occupied(center: Point<i64>, g: &FixedGrid<Tile>) -> usize {
@@ -58,8 +60,15 @@ fn scan_direction(center: Point<i64>, direction: Point<i64>, g: &FixedGrid<Tile>
 }
 
 impl Board {
+    fn inner(&self) -> &FixedGrid<Tile> {
+        if self.swp {
+            &self.b
+        } else {
+            &self.a
+        }
+    }
     fn count(&self) -> usize {
-        self.inner
+        self.inner()
             .raw_iter()
             .filter(|t| **t == Tile::Occupied)
             .count()
@@ -69,44 +78,49 @@ impl Board {
         tolerance: usize,
         check_point: F,
     ) -> bool {
-        let mut new = self
-            .inner
-            .raw_iter()
+        let Board { a, b, swp } = self;
+
+        let (read, write) = if *swp { (b, a) } else { (a, b) };
+
+        read.raw_iter()
+            .zip(write.mut_iter())
             .enumerate()
-            .map(|(idx, t)| {
-                let p = self.inner.idx_to_point(idx);
-                match t {
+            .for_each(|(idx, (t, t_write))| {
+                let p = read.idx_to_point(idx);
+                *t_write = match t {
                     Tile::Floor => Tile::Floor,
                     Tile::Empty => {
-                        if check_point(p, &self.inner) == 0 {
+                        if check_point(p, &read) == 0 {
                             Tile::Occupied
                         } else {
                             Tile::Empty
                         }
                     }
                     Tile::Occupied => {
-                        if check_point(p, &self.inner) >= tolerance {
+                        if check_point(p, &read) >= tolerance {
                             Tile::Empty
                         } else {
                             Tile::Occupied
                         }
                     }
                 }
-            })
-            .collect::<Vec<_>>();
-        std::mem::swap(&mut self.inner.inner, &mut new);
-        self.inner.inner != new
+            });
+        *swp = !*swp;
+        read != write
     }
 }
 
 fn parse(input: &str) -> Result<Board> {
+    let grid = FixedGrid::parse_ascii_grid(input, |c| match c {
+        '.' => Ok(Tile::Floor),
+        'L' => Ok(Tile::Empty),
+        '#' => Ok(Tile::Occupied),
+        _ => Err(anyhow::anyhow!("unknown tile char: {:?}", c)),
+    })?;
     Ok(Board {
-        inner: FixedGrid::parse_ascii_grid(input, |c| match c {
-            '.' => Ok(Tile::Floor),
-            'L' => Ok(Tile::Empty),
-            '#' => Ok(Tile::Occupied),
-            _ => Err(anyhow::anyhow!("unknown tile char: {:?}", c)),
-        })?,
+        a: grid.clone(),
+        b: grid,
+        swp: false,
     })
 }
 
@@ -136,7 +150,7 @@ impl fmt::Display for Tile {
 
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.inner)
+        write!(f, "{}", self.inner())
     }
 }
 
