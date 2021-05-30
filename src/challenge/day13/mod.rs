@@ -1,8 +1,6 @@
 use anyhow::{Context, Result};
 use std::fmt;
 
-mod rem_offset;
-
 pub fn part1(input: &str) -> Result<impl fmt::Display> {
     let (depart, busses) = parse(input)?;
     log::debug!("depart earliest: {:?}", depart);
@@ -17,7 +15,7 @@ pub fn part1(input: &str) -> Result<impl fmt::Display> {
 }
 pub fn part2(input: &str) -> Result<impl fmt::Display> {
     let (_, busses) = parse(input)?;
-    let x = rem_offset::chain_offset(busses.as_slice())?;
+    let x = chain_offset(busses.as_slice())?;
     Ok(format!("{}", x))
 }
 
@@ -67,6 +65,91 @@ fn parse_schedule(input: &str) -> Result<Vec<Option<i64>>> {
         .collect::<Result<Vec<_>>>()
 }
 
+pub fn chain_offset(c: &[Option<i64>]) -> Result<i64> {
+    let init = match c.iter().next() {
+        Some(Some(x)) => *x,
+        _ => anyhow::bail!("chain must start with valid entry"),
+    };
+
+    struct State {
+        start: i64,
+        interval: i64,
+    }
+
+    let mut state = State {
+        start: 0,
+        interval: init,
+    };
+
+    for (idx, id) in c.iter().enumerate().skip(1).filter_map(|(idx, id)| {
+        if let Some(id) = id {
+            Some((idx, *id))
+        } else {
+            None
+        }
+    }) {
+        let (offset, period) = offset_rem(state.interval, id, idx as i64, state.start)?;
+        state.start = offset;
+        state.interval = period;
+    }
+
+    Ok(state.start)
+}
+
+pub fn offset_rem(
+    current_period: i64,
+    add_period: i64,
+    target_offset: i64,
+    start_time: i64,
+) -> Result<(i64, i64)> {
+    let period = current_period * add_period;
+
+    let overlap_period = aoc::math::inverse_mod(current_period, add_period).ok_or_else(|| {
+        anyhow::anyhow!(
+            "two numbers ({} & {}) do not have an inverse mod, so won't ever align",
+            current_period,
+            add_period
+        )
+    })?;
+
+    let overlap_offset = start_time % add_period;
+    let overlap_cycle_target = add_period - target_offset;
+    let wait_cycles = overlap_cycle_target - overlap_offset;
+    let mut new_start_time = (wait_cycles * overlap_period * current_period + start_time) % period;
+
+    while new_start_time < 0 {
+        new_start_time += period
+    }
+
+    log::debug!(
+        "start: {}, period: {}",
+        new_start_time,
+        current_period * add_period
+    );
+    Ok((new_start_time, period))
+}
+
+#[allow(dead_code)] // debug printing
+pub fn print_grid(ids: &[&i64], start: usize, end: usize) {
+    print!("time\t");
+    for id in ids {
+        print!("{}\t", id);
+    }
+    println!("");
+    for idx in start..end {
+        print!("{}\t", idx);
+
+        for id in ids {
+            if (idx as i64) % *id == 0 {
+                print!("D\t")
+            } else {
+                print!(".\t")
+            }
+        }
+        println!("");
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -96,7 +179,7 @@ mod tests {
 
     fn earliest_seq_test(input: &str, expected: i64) {
         let data = parse_schedule(input).unwrap();
-        let early = rem_offset::chain_offset(data.as_slice()).unwrap();
+        let early = chain_offset(data.as_slice()).unwrap();
         assert_eq!(early, expected);
     }
 
@@ -119,5 +202,39 @@ mod tests {
     #[test]
     fn earliest_seq_ex5() {
         earliest_seq_test("1789,37,47,1889", 1202161486);
+    }
+
+    #[test]
+    fn non_offset_consecutive_small_large() {
+        assert_eq!(offset_rem(3, 5, 1, 0).unwrap(), (9, 15));
+    }
+
+    #[test]
+    fn offset_consecutive() {
+        assert_eq!(offset_rem(15, 7, 2, 9).unwrap(), (54, 105));
+    }
+
+    #[test]
+    fn non_offset_skip_large_small() {
+        assert_eq!(offset_rem(17, 13, 2, 0).unwrap(), (102, 221));
+    }
+
+    #[test]
+    fn offset_large_number() {
+        assert_eq!(
+            offset_rem(166439, 19, 7, 70147).unwrap(),
+            (1068781, 3162341)
+        );
+    }
+
+    #[test]
+    fn offset() {
+        assert_eq!(offset_rem(221, 19, 3, 102).unwrap(), (3417, 4199));
+    }
+
+    #[test]
+    fn chain() {
+        let data = vec![Some(17), None, Some(13), Some(19)];
+        assert_eq!(chain_offset(data.as_slice()).unwrap(), 3417)
     }
 }
