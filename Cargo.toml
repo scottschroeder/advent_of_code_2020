@@ -12,7 +12,7 @@ aoc = { path = "../advent_of_code", package = "advent_of_code"}
 
 clap = "2.33.3"
 anyhow = "1.0.32"
-color-backtrace = { version = "0.4" }
+color-backtrace = { version = "0.5" }
 rayon = "1.5.0"
 
 
