@@ -23,8 +23,8 @@ petgraph = "0.5"
 
 
 
-#[profile.test]
-#opt-level = 3
+[profile.test]
+opt-level = 3
 
 #[profile.release]
 #debug = true

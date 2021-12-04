@@ -1,8 +1,9 @@
-use anyhow::{Context, Result};
-use std::{collections::HashMap, fmt};
+use anyhow::Result;
+use std::fmt;
+mod memory_sequence;
 
-const PT1_SPOKEN: u32 = 2020;
-const PT2_SPOKEN: u32 = 30000000;
+const PT1_SPOKEN: usize = 2020;
+const PT2_SPOKEN: usize = 30000000;
 
 pub fn part1(input: &str) -> Result<impl fmt::Display> {
     let starting = parse_input(input)?;
@@ -14,14 +15,9 @@ pub fn part2(input: &str) -> Result<impl fmt::Display> {
     Ok(number_at(&starting, PT2_SPOKEN))
 }
 
-fn number_at(starting: &[u32], target: u32) -> u32 {
-    let mut game = MemoryGame::init(&starting);
-    loop {
-        let (turn, spoken) = game.turn();
-        if turn == target {
-            return spoken;
-        }
-    }
+fn number_at(starting: &[u32], target: usize) -> usize {
+    let mut game = memory_sequence::Sequence::init(starting, target);
+    game.nth(target - starting.len() - 1).unwrap()
 }
 
 fn parse_input(s: &str) -> Result<Vec<u32>> {
@@ -34,41 +30,6 @@ fn parse_input(s: &str) -> Result<Vec<u32>> {
                 .map_err(|e| anyhow::format_err!("could not parse {:?}: {}", s, e))
         })
         .collect::<Result<Vec<_>>>()
-}
-
-#[derive(Debug)]
-struct MemoryGame {
-    history: HashMap<u32, u32>,
-    counter: u32,
-    last: u32,
-}
-
-impl MemoryGame {
-    fn init(starting: &[u32]) -> MemoryGame {
-        let mut history = HashMap::new();
-        let counter = starting.len();
-        for (idx, x) in starting.iter().enumerate() {
-            let c = idx + 1;
-            if c < counter {
-                history.insert(*x, c as u32);
-            }
-        }
-        MemoryGame {
-            history,
-            counter: counter as u32, 
-            last: starting[counter - 1],
-        }
-    }
-
-    fn turn(&mut self) -> (u32, u32) {
-        let prev = self.history.get(&self.last).cloned();
-        self.history.insert(self.last, self.counter);
-        let age = prev.map(|p| self.counter - p).unwrap_or(0);
-        self.counter += 1;
-        log::trace!("turn: {} - last: {} prev: {:?} speak: {}", self.counter, self.last, prev, age);
-        self.last = age;
-        (self.counter, age)
-    }
 }
 
 #[cfg(test)]
@@ -86,6 +47,14 @@ mod tests {
         assert_eq!(format!("{}", part1(INPUT_EX1).unwrap()), "436")
     }
     #[test]
+    fn verify_p1_ex1_sequence() {
+        let starting = parse_input(INPUT_EX1).unwrap();
+        let target = 10 - starting.len();
+        let game = memory_sequence::Sequence::init(&starting, target);
+        let seq = game.take(target).collect::<Vec<_>>();
+        assert_eq!(seq, vec![0, 3, 3, 1, 0, 4, 0])
+    }
+    #[test]
     fn verify_p1_examples() {
         assert_eq!(format!("{}", part1("1,3,2").unwrap()), "1");
         assert_eq!(format!("{}", part1("2,1,3").unwrap()), "10");
@@ -98,17 +67,34 @@ mod tests {
     fn verify_p2_ex1() {
         assert_eq!(format!("{}", part2(INPUT_EX1).unwrap()), "175594")
     }
+
     #[test]
-    fn verify_p2_examples() {
+    fn verify_p2_example_1() {
         assert_eq!(format!("{}", part2("1,3,2").unwrap()), "2578");
-        assert_eq!(format!("{}", part2("2,1,3").unwrap()), "3544142");
-        assert_eq!(format!("{}", part2("1,2,3").unwrap()), "261214");
-        assert_eq!(format!("{}", part2("2,3,1").unwrap()), "6895259");
-        assert_eq!(format!("{}", part2("3,2,1").unwrap()), "18");
-        assert_eq!(format!("{}", part2("3,1,2").unwrap()), "362");
     }
     #[test]
+    fn verify_p2_example_2() {
+        assert_eq!(format!("{}", part2("2,1,3").unwrap()), "3544142");
+    }
+    #[test]
+    fn verify_p2_example_3() {
+        assert_eq!(format!("{}", part2("1,2,3").unwrap()), "261214");
+    }
+    #[test]
+    fn verify_p2_example_4() {
+        assert_eq!(format!("{}", part2("2,3,1").unwrap()), "6895259");
+    }
+    #[test]
+    fn verify_p2_example_5() {
+        assert_eq!(format!("{}", part2("3,2,1").unwrap()), "18");
+    }
+    #[test]
+    fn verify_p2_example_6() {
+        assert_eq!(format!("{}", part2("3,1,2").unwrap()), "362");
+    }
+
+    #[test]
     fn verify_p2() {
-        assert_eq!(format!("{}", part2(INPUT).unwrap()), "")
+        assert_eq!(format!("{}", part2(INPUT).unwrap()), "62714")
     }
 }
