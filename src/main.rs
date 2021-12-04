@@ -62,6 +62,11 @@ fn get_args() -> clap::ArgMatches<'static> {
                 .global(true)
                 .help("Sets the level of verbosity"),
         )
+        .arg(
+            clap::Arg::with_name("raw")
+                .short("r")
+                .help("interpret the input directly rather than as a filename"),
+        )
         .arg(clap::Arg::with_name("day").required(true))
         .arg(clap::Arg::with_name("part").required(true))
         .arg(clap::Arg::with_name("input").required(true))

@@ -27,7 +27,11 @@ fn f<T: std::fmt::Display>(t: Result<T>) -> Result<()> {
 pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let day = args.value_of("day").unwrap().parse::<u32>()?;
     let part = args.value_of("part").unwrap().parse::<u32>()?;
-    let input = read_to_string(args.value_of("input").unwrap())?;
+    let input = if args.is_present("raw") {
+        args.value_of("input").unwrap().to_string()
+    } else {
+        read_to_string(args.value_of("input").unwrap())?
+    };
     log::debug!("running day {}:{}", day, part);
     match (day, part) {
         (1, 1) => f(day1::part1(&input)),
