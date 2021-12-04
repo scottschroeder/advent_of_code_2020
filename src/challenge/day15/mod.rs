@@ -15,7 +15,7 @@ pub fn part2(input: &str) -> Result<impl fmt::Display> {
     Ok(number_at(&starting, PT2_SPOKEN))
 }
 
-fn number_at(starting: &[u32], target: usize) -> usize {
+fn number_at(starting: &[u32], target: usize) -> u32 {
     let mut game = memory_sequence::Sequence::init(starting, target);
     game.nth(target - starting.len() - 1).unwrap()
 }
