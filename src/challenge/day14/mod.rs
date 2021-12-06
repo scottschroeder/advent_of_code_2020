@@ -13,7 +13,6 @@ pub fn part2(input: &str) -> Result<impl fmt::Display> {
     Ok(mask_cpu::execute_v4(&p)?)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

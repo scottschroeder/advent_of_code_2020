@@ -164,12 +164,12 @@ impl FloatingAddr {
         let fixed_lhs = self.start & other.blackout;
         let fixed_rhs = other.start & self.blackout;
         if (fixed_lhs ^ fixed_rhs) > 0 {
-            return None
+            return None;
         }
 
         Some(FloatingAddr {
             start: self.start | other.start,
-            blackout: self.blackout | other.blackout
+            blackout: self.blackout | other.blackout,
         })
     }
 }
@@ -212,10 +212,18 @@ pub fn execute_v4(p: &Program) -> Result<u64> {
 }
 
 fn count_fresh_addrs(addr: FloatingAddr, seen: Option<FloatingAddr>) -> (u64, FloatingAddr) {
-    log::trace!("Already Written: {:?} (n={})", seen, seen.map(|s| s.total_addrs()).unwrap_or(0));
+    log::trace!(
+        "Already Written: {:?} (n={})",
+        seen,
+        seen.map(|s| s.total_addrs()).unwrap_or(0)
+    );
     let intersection = seen.and_then(|s| s.intersection(addr));
     let intersection_count = intersection.map(|s| s.total_addrs()).unwrap_or(0);
-    log::trace!("Intersection: {:?} (n={})", intersection, intersection_count);
+    log::trace!(
+        "Intersection: {:?} (n={})",
+        intersection,
+        intersection_count
+    );
     let new_addrs = addr.total_addrs() - intersection_count;
     log::trace!("New Addresses: {:?} (n={})", addr, new_addrs);
     let new_seen = seen.map(|s| s.union(addr)).unwrap_or(addr);
@@ -447,29 +455,29 @@ mod tests {
 
     #[test]
     fn count_touched_addrs_zeros() {
-        let a = parse_floating( "000000000000000000000000000000000000").unwrap();
+        let a = parse_floating("000000000000000000000000000000000000").unwrap();
         assert_eq!(a.total_addrs(), 1)
     }
 
     #[test]
     fn count_touched_addrs_one() {
-        let a = parse_floating( "000000000000000000000000000000000001").unwrap();
+        let a = parse_floating("000000000000000000000000000000000001").unwrap();
         assert_eq!(a.total_addrs(), 1)
     }
 
     #[test]
     fn count_touched_addrs_random() {
-        let a = parse_floating( "000000000100100001001110011001000001").unwrap();
+        let a = parse_floating("000000000100100001001110011001000001").unwrap();
         assert_eq!(a.total_addrs(), 1)
     }
     #[test]
     fn count_touched_addrs_single_float() {
-        let a = parse_floating( "0000000001001000010X1110011001000001").unwrap();
+        let a = parse_floating("0000000001001000010X1110011001000001").unwrap();
         assert_eq!(a.total_addrs(), 2)
     }
     #[test]
     fn count_touched_addrs_double_float() {
-        let a = parse_floating( "0000X00001001000010X1110011001000001").unwrap();
+        let a = parse_floating("0000X00001001000010X1110011001000001").unwrap();
         assert_eq!(a.total_addrs(), 4)
     }
 }
